@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AquaHELL Resort - Incident Response Experience</title>
+<style>
+:root{
+  --bg:#050505;
+  --panel:#101010;
+  --panel2:#171717;
+  --line:rgba(255,45,45,.35);
+  --red:#ff2d2d;
+  --red2:#ff6a00;
+  --gold:#ffd36b;
+  --green:#45ff78;
+  --text:#f4f4f4;
+  --muted:#b8b8b8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#050505;color:var(--text)}
+body{
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 80% 10%,rgba(255,45,45,.22),transparent 28%),
+    radial-gradient(circle at 10% 80%,rgba(255,106,0,.14),transparent 30%),
+    linear-gradient(180deg,#050505,#110606 65%,#220808);
+}
+button,input{font-family:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+.start,.end{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:linear-gradient(180deg,#050505,#160606);
+}
+.end{display:none}
+.end.show{display:flex}
+.modal{
+  width:min(980px,96vw);
+  background:linear-gradient(180deg,#121212,#080808);
+  border:1px solid var(--line);
+  border-radius:28px;
+  padding:28px;
+  box-shadow:0 30px 100px rgba(0,0,0,.78);
+}
+.eyebrow{
+  color:#ff8e8e;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  font-weight:900;
+  font-size:12px;
+}
+h1{font-size:52px;line-height:1;margin:8px 0 12px}
+.hell{
+  color:#fff;
+  text-shadow:0 0 7px #fff,0 0 18px var(--red),0 0 36px var(--red2);
+  animation:fireText .75s infinite alternate;
+}
+@keyframes fireText{to{filter:brightness(1.35);transform:translateY(-1px)}}
+p{line-height:1.55;color:#ddd}
+.nameRow{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:18px}
+.nameRow input{
+  width:100%;
+  background:#050505;
+  color:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  font-weight:700;
+}
+.primary{
+  background:linear-gradient(90deg,var(--red),var(--red2));
+  border:0;
+  border-radius:14px;
+  color:white;
+  padding:14px 18px;
+  font-weight:900;
+  box-shadow:0 12px 36px rgba(255,45,45,.22);
+}
+.secondary{
+  background:#181818;
+  border:1px solid var(--line);
+  border-radius:14px;
+  color:#fff;
+  padding:12px 15px;
+  font-weight:900;
+}
+.popup{
+  display:none;
+  margin-top:14px;
+  padding:13px;
+  border-radius:14px;
+  background:#2a0d0d;
+  border:1px solid rgba(255,45,45,.6);
+  color:#fff;
+  font-weight:800;
+}
+
+.app{
+  height:100vh;
+  display:grid;
+  grid-template-columns:360px 1fr;
+  grid-template-rows:96px 1fr 80px;
+  gap:12px;
+  padding:12px;
+}
+.top,.sideCard,.main,.footer{
+  background:linear-gradient(180deg,#111,#080808);
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:0 20px 55px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+.top{
+  grid-column:1/3;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:16px 20px;
+  position:relative;
+}
+.top:after{
+  content:"";
+  position:absolute;
+  right:360px;
+  top:20px;
+  width:230px;
+  height:56px;
+  border-radius:50px 50px 14px 14px;
+  transform:rotate(-7deg);
+  background:linear-gradient(90deg,#2b2b2b,var(--red),var(--red2),#300000);
+  box-shadow:0 0 36px rgba(255,45,45,.38);
+}
+.brand{font-size:40px;font-weight:900;position:relative;z-index:2}
+.subtitle{color:var(--muted);font-size:13px;font-weight:700;margin-top:5px;position:relative;z-index:2}
+.timerBox{min-width:270px;position:relative;z-index:2;background:#090909;border:1px solid var(--line);border-radius:18px;padding:10px 12px}
+.time{font-size:40px;font-weight:900;text-shadow:0 0 18px rgba(255,45,45,.8)}
+.time.danger{color:var(--red);animation:pulse .45s infinite}
+@keyframes pulse{50%{transform:scale(1.04)}}
+.timebar{height:10px;background:#292929;border-radius:99px;overflow:hidden;margin-top:8px}
+.timebar span{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--green),var(--gold),var(--red2),var(--red));transition:width .3s linear}
+
+.left{display:grid;grid-template-rows:1fr 1fr;gap:12px;min-height:0}
+.head{
+  height:48px;
+  border-bottom:1px solid rgba(255,45,45,.25);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  color:#ff8e8e;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+.body{height:calc(100% - 48px);overflow:auto;padding:14px}
+.statusGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.statusBox{
+  background:#151515;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:12px;
+}
+.statusBox b{display:block;font-size:22px;color:#fff}
+.statusBox span{font-size:11px;color:#bbb;text-transform:uppercase;font-weight:900}
+.fireSlide{
+  margin-top:12px;
+  height:150px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#220707,#0c0c0c);
+  border:1px solid rgba(255,255,255,.08);
+  position:relative;
+  overflow:hidden;
+}
+.fireSlide:before{
+  content:"";
+  position:absolute;
+  right:68px;
+  top:12px;
+  width:74px;
+  height:170px;
+  border-radius:45px 45px 16px 16px;
+  transform:rotate(16deg);
+  background:linear-gradient(180deg,var(--red),var(--red2),#300000);
+  box-shadow:0 0 34px rgba(255,45,45,.45);
+}
+.fireSlide:after{
+  content:"";
+  position:absolute;
+  right:56px;
+  top:76px;
+  width:72px;
+  height:72px;
+  border-radius:60% 40% 65% 35%;
+  background:radial-gradient(circle,#fff1a5 0 12%,#ffd36b 18%,#ff6a00 42%,#ff2d2d 65%,transparent 70%);
+  animation:flame .55s infinite alternate;
+}
+@keyframes flame{to{transform:scale(1.13) translateY(-6px) rotate(5deg)}}
+.fireLabel{
+  position:absolute;
+  left:18px;
+  top:18px;
+  right:150px;
+  font-weight:900;
+  color:#fff;
+}
+.tool{
+  background:#151515;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.tool h3{margin:0 0 8px;font-size:13px;color:#ff8e8e;text-transform:uppercase;letter-spacing:.08em}
+.tool p{font-size:12px;color:#d0d0d0;margin:0 0 8px}
+.tool input{
+  width:100%;
+  background:#050505;
+  color:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  outline:none;
+}
+.terminal{
+  height:128px;
+  background:#030303;
+  color:#d4ffd4;
+  border:1px solid rgba(69,255,120,.28);
+  border-radius:12px;
+  padding:9px;
+  font-family:Consolas,monospace;
+  font-size:12px;
+  white-space:pre-wrap;
+  overflow:auto;
+}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.quick button{background:#191919;border:1px solid var(--line);color:#fff;border-radius:99px;padding:7px 9px;font-size:11px;font-weight:900}
+
+.main{min-height:0}
+.main .body{display:grid;grid-template-rows:auto 1fr;gap:12px}
+.scenario{
+  background:#151515;
+  border:1px solid rgba(255,45,45,.28);
+  border-radius:18px;
+  padding:16px;
+}
+.scenario h2{margin:0 0 8px;font-size:24px;line-height:1.15}
+.scenario p{margin:0;color:#ddd;line-height:1.48;font-size:14px}
+.evidence{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.evidence div{background:#090909;border:1px solid #333;border-radius:12px;padding:9px;color:#ccc;font-size:12px;line-height:1.35}
+.answers{overflow:auto;min-height:0}
+.answer{
+  display:grid;
+  grid-template-columns:32px 1fr;
+  gap:10px;
+  width:100%;
+  text-align:left;
+  background:#141414;
+  color:#fff;
+  border:1px solid rgba(255,45,45,.28);
+  border-radius:16px;
+  padding:13px;
+  margin-bottom:9px;
+  line-height:1.42;
+  cursor:pointer;
+  font-size:13px;
+}
+.answer:hover{background:#1f1f1f;border-color:var(--red)}
+.letter{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(90deg,var(--red),var(--red2));
+  display:flex;align-items:center;justify-content:center;font-weight:900;
+}
+.answer.good{background:#0f2b15!important;border-color:var(--green)!important}
+.answer.bad{background:#371014!important;border-color:var(--red)!important}
+.answer.locked{pointer-events:none;opacity:.75}
+
+.footer{
+  grid-column:2/3;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.kpi{padding:13px;border-right:1px solid rgba(255,45,45,.25)}
+.kpi:last-child{border-right:0}
+.kpi b{display:block;font-size:22px}
+.kpi span{font-size:11px;color:#bbb;font-weight:900;text-transform:uppercase;letter-spacing:.09em}
+
+.toastZone{position:fixed;right:14px;bottom:90px;width:min(380px,calc(100vw - 28px));z-index:30}
+.toast{
+  background:#111;
+  border:1px solid #773333;
+  border-radius:14px;
+  padding:11px 36px 11px 12px;
+  margin-top:8px;
+  box-shadow:0 12px 35px #000;
+  position:relative;
+  animation:rise .25s ease;
+}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.toast b{display:block;color:#ff8e8e;font-size:12px;text-transform:uppercase}
+.toast span{font-size:12px;color:#eee}
+.toast button{position:absolute;right:8px;top:8px;border:0;border-radius:8px;background:#222;color:#fff}
+
+.call{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.78);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+}
+.call.show{display:flex}
+.callbox{
+  width:min(620px,92vw);
+  background:#111;
+  border:2px solid var(--red);
+  border-radius:24px;
+  padding:24px;
+  box-shadow:0 0 70px rgba(255,45,45,.25);
+}
+.callbox small{color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.callbox h3{font-size:30px;margin:4px 0 10px}
+.callbox p{font-size:18px;color:#eee}
+
+.certBox{display:none;margin-top:14px}
+.certBox.show{display:block}
+canvas{max-width:100%;border:1px solid rgba(255,211,107,.45);border-radius:16px;background:#080808}
+
+@media(max-width:1050px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100vh;grid-template-columns:1fr;grid-template-rows:auto auto auto auto}
+  .top,.footer{grid-column:1}
+  .top{display:block}
+  .timerBox{margin-top:12px;min-width:0}
+  .top:after{display:none}
+  .left{min-height:760px}
+  .footer{grid-template-columns:1fr 1fr}
+  .evidence{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .brand{font-size:30px}
+  h1{font-size:34px}
+  .nameRow{grid-template-columns:1fr}
+  .footer{grid-template-columns:1fr}
+  .modal{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<section id="startScreen" class="start">
+  <div class="modal">
+    <div class="eyebrow">Incident Response Experience</div>
+    <h1>Aqua<span class="hell">HELL</span> Resort</h1>
+    <p>O incidente já aconteceu. O parque aquático está em colapso, o escorregador está pegando fogo, a diretoria está ligando e alguém aprovou OAuth em produção porque aparentemente governança era opcional.</p>
+    <p>Você tem 3 minutos por decisão. Precisa acertar tudo para liberar o certificado.</p>
+    <div class="nameRow">
+      <input id="playerName" placeholder="Digite seu nome para entrar no SOC">
+      <button id="startBtn" class="primary">ENTRAR NO SOC</button>
+    </div>
+    <div id="namePopup" class="popup"></div>
+  </div>
+</section>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="eyebrow">O incidente já aconteceu</div>
+      <div class="brand">Aqua<span class="hell">HELL</span> Resort</div>
+      <div class="subtitle">Investigação reversa em parque aquático corporativo do inferno.</div>
+    </div>
+    <div class="timerBox">
+      <div class="eyebrow">Tempo para decisão</div>
+      <div id="timeText" class="time">03:00</div>
+      <div class="timebar"><span id="timeBar"></span></div>
+    </div>
+  </header>
+
+  <aside class="left">
+    <section class="sideCard">
+      <div class="head"><span>Estado do parque</span><span>ao vivo</span></div>
+      <div class="body">
+        <div class="statusGrid">
+          <div class="statusBox"><b id="st1">187</b><span>alertas abertos</span></div>
+          <div class="statusBox"><b id="st2">Alta</b><span>pressão executiva</span></div>
+          <div class="statusBox"><b id="st3">Ruim</b><span>qualidade dos logs</span></div>
+          <div class="statusBox"><b id="st4">Sim</b><span>marketing negando</span></div>
+        </div>
+        <div class="fireSlide"><div class="fireLabel">HELL Slide em chamas<br><span style="color:#bbb;font-size:12px">Nem todo fogo é vetor inicial. Mas ajuda a atrapalhar.</span></div></div>
+      </div>
+    </section>
+
+    <section class="sideCard">
+      <div class="head"><span>Ferramentas</span><span>funcionais</span></div>
+      <div class="body">
+        <div class="tool">
+          <h3>Mini SIEM</h3>
+          <p>Busca case-insensitive. Pesquise: oauth, powershell, dns, waf, logging.</p>
+          <input id="siemSearch" placeholder="buscar no SIEM">
+          <div id="siemOut" class="terminal" style="margin-top:8px"></div>
+        </div>
+        <div class="tool">
+          <h3>AquaShell</h3>
+          <div id="terminal" class="terminal">AquaShell v7.0
+Digite help</div>
+          <input id="cmdInput" placeholder="exemplo: cat timeline.txt">
+          <div class="quick">
+            <button id="cmdRun">RUN</button>
+            <button data-cmd="cat oauth_audit.json">OAuth</button>
+            <button data-cmd="grep dns ot.log">DNS</button>
+            <button data-cmd="grep powershell edr.log">PowerShell</button>
+            <button data-cmd="cat timeline.txt">Timeline</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="head"><span id="phaseTag">sem tutorial</span><span>uma melhor decisão</span></div>
+    <div class="body">
+      <div id="scenario" class="scenario"></div>
+      <div id="answers" class="answers"></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="kpi"><b id="qNum">1/8</b><span>decisão</span></div>
+    <div class="kpi"><b id="pressure">37%</b><span>pressão</span></div>
+    <div class="kpi"><b id="score">0%</b><span>precisão</span></div>
+    <div class="kpi"><b id="hyp">OAuth?</b><span>hipótese crítica</span></div>
+  </footer>
+</div>
+
+<div id="toastZone" class="toastZone"></div>
+
+<div id="callOverlay" class="call">
+  <div class="callbox">
+    <small id="callRole">DIRETORIA LIGANDO</small>
+    <h3 id="callName">CEO</h3>
+    <p id="callText">Você tem certeza dessa decisão?</p>
+    <button id="closeCall" class="primary">ENCERRAR CHAMADA</button>
+  </div>
+</div>
+
+<section id="endScreen" class="end">
+  <div class="modal">
+    <div class="eyebrow" id="endEyebrow">Resultado</div>
+    <h1 id="endTitle">Fim</h1>
+    <p id="endText"></p>
+    <div id="certBox" class="certBox">
+      <canvas id="certCanvas" width="1600" height="1100"></canvas><br>
+      <button id="downloadCert" class="primary">BAIXAR CERTIFICADO PNG</button>
+    </div>
+    <button id="restartBtn" class="secondary">REINICIAR INCIDENTE</button>
+  </div>
+</section>
+
+<script>
+(function(){
+  "use strict";
+
+  function el(id){return document.getElementById(id);}
+  function all(sel){return Array.prototype.slice.call(document.querySelectorAll(sel));}
+
+  var SALT = "AQUAHELL_2026_MARIANA_BS";
+  var player = "";
+  var qIndex = 0;
+  var correctCount = 0;
+  var timeLeft = 180;
+  var timerId = null;
+  var popupId = null;
+  var locked = false;
+  var started = false;
+  var pressure = 37;
+  var muted = false;
+  var audioCtx = null;
+  var callActive = false;
+
+  function xorEncode(str){
+    var key = SALT;
+    var out = [];
+    for(var i=0;i<str.length;i++){
+      out.push((str.charCodeAt(i) ^ key.charCodeAt(i % key.length)).toString(16).padStart(2,"0"));
+    }
+    return out.join("");
+  }
+  function xorDecode(hex){
+    var key = SALT;
+    var out = "";
+    for(var i=0;i<hex.length;i+=2){
+      var code = parseInt(hex.substr(i,2),16);
+      out += String.fromCharCode(code ^ key.charCodeAt((i/2) % key.length));
+    }
+    return out;
+  }
+  function encIndex(n){return xorEncode(String(n));}
+  function decIndex(hex){return Number(xorDecode(hex));}
+
+  var questions = [
+    {
+      tag:"00:00 - Turno herdado do caos",
+      title:"Todos estão culpando o PowerShell.",
+      desc:"Você assume o SOC com WAF alertando SQLi, EDR apontando PowerShell codificado, DNS com suposto beaconing e um pequeno alerta de OAuth consent grant aprovado há 15 dias.",
+      ev:["WAF bloqueou SQLi sem sessão criada","PowerShell veio de updater interno","OAuth incomum ficou sem triagem"],
+      correct:encIndex(2),
+      answers:[
+        "Priorizar o alerta do WAF, coletar payload, bloquear IPs, revisar regras e abrir crise web, pois uma tentativa de SQL Injection em aplicação exposta pode indicar reconhecimento ativo contra o ambiente.",
+        "Isolar imediatamente o endpoint do PowerShell, revisar processo pai, coletar artefatos de EDR e bloquear execução codificada, pois comando ofuscado durante crise pode indicar persistência ou movimentação lateral.",
+        "Tratar OAuth como hipótese principal, correlacionando permissões, origem, usuários, regras de e-mail e automações, mantendo WAF, PowerShell e DNS como trilhas secundárias até haver evidência real.",
+        "Bloquear o domínio visto no beaconing DNS do controlador OT, registrar indisponibilidade preventiva e acionar manutenção, pois tráfego periódico externo pode indicar canal de comando e controle."
+      ]
+    },
+    {
+      tag:"00:07 - Diretoria exige narrativa",
+      title:"O CFO pergunta se isso afeta pagamento.",
+      desc:"Caixas travaram, existe impossible travel em conta de marketing e também erro antigo de licença no servidor de pagamentos. O financeiro quer saber se continua operando.",
+      ev:["Impossible travel com OAuth grant","Erro de licença antigo","Sem evidência de fraude em transações"],
+      correct:encIndex(1),
+      answers:[
+        "Declarar comprometimento financeiro e paralisar pagamentos, preservando logs de POS e evitando movimentação que possa contaminar investigação, já que falha de caixa durante incidente pode indicar fraude.",
+        "Separar impacto operacional de comprometimento confirmado, comunicar que não há evidência de fraude ainda, restringir OAuth, preservar logs e manter pagamentos monitorados com critério claro de parada.",
+        "Ignorar a diretoria e focar apenas na investigação técnica, pois comunicação executiva pode contaminar a análise com pressão política e criar conclusões apressadas antes da causa raiz.",
+        "Reiniciar o servidor de pagamentos para reduzir ruído operacional, recuperar aparência de normalidade e permitir que a investigação siga com menos pressão do financeiro e da diretoria."
+      ]
+    },
+    {
+      tag:"00:14 - Polvo DJ suspeito",
+      title:"DNS beaconing aparece vindo do Polvo DJ.",
+      desc:"O Polvo DJ consulta um domínio a cada 60 segundos. O dashboard OT mostra firmware atualizado ontem. A documentação local está desatualizada e o fornecedor não responde.",
+      ev:["Consulta coincide com firmware","Domínio parece telemetria do fabricante","Sem payload ou download estranho"],
+      correct:encIndex(3),
+      answers:[
+        "Classificar como C2 e bloquear o domínio no DNS, pois periodicidade de 60 segundos é compatível com beaconing de malware e dispositivo IoT recreativo não deveria falar com internet.",
+        "Desligar fisicamente o Polvo DJ, preservar o estado do equipamento e acionar manutenção, porque qualquer IoT falando com internet durante incidente amplia superfície de ataque.",
+        "Coletar imagem e memória do equipamento embarcado antes de qualquer contenção, pois firmware recente e tráfego recorrente podem indicar persistência em camada de dispositivo.",
+        "Validar se o domínio pertence ao fabricante, correlacionar com firmware, checar volume e ausência de transferência anômala, mantendo monitoramento sem bloquear até haver sinal adicional."
+      ]
+    },
+    {
+      tag:"00:21 - Marketing nega tudo",
+      title:"A gerente de marketing criou regras estranhas.",
+      desc:"Regras de encaminhamento foram criadas após consentimento OAuth. O marketing diz que era uma ferramenta inofensiva para campanha. A conta tinha exceção de MFA.",
+      ev:["Inbox rule externa após OAuth","App pede Mail.Read e offline_access","MFA tinha exceção legada"],
+      correct:encIndex(0),
+      answers:[
+        "Revogar o app OAuth suspeito, invalidar sessões e refresh tokens, remover regras de encaminhamento, preservar evidências e iniciar busca retrospectiva por outros usuários afetados.",
+        "Trocar apenas a senha da gerente de marketing, preservar o aplicativo autorizado e observar novos acessos, pois remover o app cedo demais pode reduzir visibilidade sobre permissões usadas.",
+        "Aguardar confirmação do fornecedor da ferramenta de marketing antes de revogar permissões, evitando impacto reputacional e interrupção de campanha ainda não comprovadamente maliciosa.",
+        "Focar primeiro em EDR nos endpoints do marketing, pois regras de e-mail podem ser consequência de malware local roubando sessão e não necessariamente abuso de consentimento."
+      ]
+    },
+    {
+      tag:"00:28 - SIEM mente por omissão",
+      title:"Logs somem no período mais importante.",
+      desc:"A timeline tem lacunas entre 02:11 e 02:38. O SOC terceirizado diz que é normal, mas auditoria mostra alteração de logging por app recém-autorizado.",
+      ev:["Gap coincide com automação OAuth","Retenção alterada sem mudança aprovada","SOC tenta normalizar a falha"],
+      correct:encIndex(2),
+      answers:[
+        "Aceitar a explicação de retenção e focar nas fontes disponíveis, pois lacunas de telemetria são comuns em ambientes sobrecarregados durante incidentes com muitos alertas.",
+        "Reiniciar conectores do SIEM para restaurar visibilidade operacional, mesmo com risco de sobrescrita parcial, porque a prioridade imediata é voltar a enxergar eventos.",
+        "Tratar a lacuna como possível evasão, preservar conectores, exportar auditoria administrativa, comparar fontes independentes e investigar a automação que alterou logging.",
+        "Abrir incidente contra o SOC terceirizado antes de continuar a análise técnica, pois ausência de logs em período crítico indica falha contratual grave e precisa ser formalizada."
+      ]
+    },
+    {
+      tag:"00:35 - OT vira crise",
+      title:"Diretor pergunta se pode desligar a piscina de ondas.",
+      desc:"O controlador está instável, mas a instabilidade começou após bloqueio de domínio de telemetria feito por outro analista. A causa real ainda aponta SaaS e OAuth.",
+      ev:["Instabilidade induzida por bloqueio defensivo","Sem comando malicioso no controlador","Causa raiz aponta SaaS"],
+      correct:encIndex(1),
+      answers:[
+        "Desligar imediatamente o controlador OT, priorizando segurança cibernética sobre disponibilidade recreativa, pois qualquer dispositivo instável durante incidente pode representar risco físico.",
+        "Reverter o bloqueio que afetou telemetria, manter modo operacional seguro com manutenção, registrar risco e seguir contenção no SaaS/OAuth, onde as evidências convergem.",
+        "Segmentar emergencialmente toda a rede OT sem validação, pois qualquer comunicação entre TI e OT durante incidente aumenta risco sistêmico e precisa ser interrompida.",
+        "Pedir que o diretor assuma formalmente o risco e decidir depois, pois o SOC não deve orientar sistemas de automação sem autorização executiva explícita e registrada."
+      ]
+    },
+    {
+      tag:"00:42 - Imprensa e jurídico",
+      title:"A hashtag AquaHellHack viralizou.",
+      desc:"Diretoria quer culpar hackers internacionais. Jurídico pergunta se já é incidente. Marketing quer chamar de instabilidade sistêmica.",
+      ev:["Comprometimento SaaS confirmado","Escopo em apuração","Não inventar ransomware nem negar incidente"],
+      correct:encIndex(3),
+      answers:[
+        "Apoiar a narrativa de hackers internacionais para ganhar tempo e reduzir pressão sobre falhas internas, evitando expor governança frágil antes da investigação completa.",
+        "Negar incidente até confirmação forense total, evitando obrigação regulatória, dano reputacional e interpretações precipitadas sobre possível vazamento de dados.",
+        "Publicar que houve vazamento completo, pois abuso OAuth com leitura de e-mail já é suficiente para assumir pior cenário e evitar acusação futura de omissão.",
+        "Orientar comunicação factual e limitada: investigação em andamento, acesso indevido SaaS identificado, medidas executadas, escopo em apuração e sem evidência atual de ransomware ou OT."
+      ]
+    },
+    {
+      tag:"00:50 - Decisão final",
+      title:"Feche a causa raiz.",
+      desc:"As evidências convergem: app OAuth falso autorizado há 15 dias, permissões excessivas, regras de encaminhamento, alteração de logging, impossible travel e automações.",
+      ev:["Vetor inicial: OAuth consent phishing","Persistência: refresh tokens e automações","WAF, PowerShell e DNS eram ruído"],
+      correct:encIndex(0),
+      answers:[
+        "Declarar abuso OAuth como causa raiz provável, revogar app e consentimentos, invalidar sessões e refresh tokens, revisar permissões, remover regras, preservar auditoria e buscar usuários afetados.",
+        "Declarar ataque com foco em OT, manter bloqueios DNS e segmentação até comprovar que todos os dispositivos aquáticos estão íntegros, evitando risco físico residual.",
+        "Declarar PowerShell como vetor inicial e expandir EDR para endpoints, pois execução codificada durante incidente é indicador forte de pós-exploração.",
+        "Declarar SQL Injection como vetor inicial, pois o WAF detectou ataque antes da maioria dos sintomas operacionais e ataques web podem roubar credenciais."
+      ]
+    }
+  ];
+
+  var logs = [
+    "CRITICAL | WAF | SQLi bloqueado sem sessão criada",
+    "HIGH | EDR | PowerShell por updater interno legado em TI-OPS-07",
+    "MEDIUM | DNS | Consulta periódica para telemetry.aqua-ot.vendor",
+    "HIGH | AAD | OAuth consent AquaHell AI Social Booster com offline_access",
+    "HIGH | AAD | Impossible travel marketing.manager BR para NL",
+    "HIGH | EXO | Inbox forwarding externa criada após OAuth",
+    "HIGH | AUDIT | Retenção de logs alterada por app automation",
+    "LOW | OT | Pato inflável preso no filtro do Lazy River"
+  ];
+
+  var popups = [
+    ["HELL SLIDE EM CHAMAS","Sensor térmico acusa fogo no escorregador. Pode ser físico. Pode ser vendor dramático."],
+    ["OAUTH CONSENT","App de marketing tem Mail.Read e offline_access. Que fofo."],
+    ["WAF","SQLi bloqueado. Barulhento, mas sem exploração confirmada."],
+    ["OT","Polvo DJ atualizou firmware e parece C2 para quem acordou agora."],
+    ["DIRETORIA","CEO quer uma frase que não dê processo nem meme."],
+    ["RH","Treinamento 'Não clique em coisa estranha' foi adiado novamente."] 
+  ];
+
+  var calls = [
+    ["DIRETOR FINANCEIRO","CFO","Isso afeta pagamento ou é só TI com nome bonito?"],
+    ["MARKETING","CMO","O app de IA era só para TikTok. Não precisa botar isso no relatório, né?"],
+    ["JURÍDICO","Legal","Podemos chamar isso de incidente sem criar apocalipse regulatório?"],
+    ["OPERAÇÕES","COO","A piscina de ondas pode explodir ou só virar vergonha pública?"],
+    ["CEO","CEO","É hacker internacional ou fomos nós com governança de mentira?"]
+  ];
+
+  function initAudio(){
+    if(audioCtx){return;}
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(AC){audioCtx = new AC();}
+  }
+
+  function tone(freq,dur){
+    if(muted || !audioCtx){return;}
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.frequency.value = freq;
+    o.type = "square";
+    g.gain.value = 0.035;
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime + dur);
+    o.stop(audioCtx.currentTime + dur + 0.02);
+  }
+
+  function ring(){
+    if(muted || !audioCtx){return;}
+    var i = 0;
+    var id = setInterval(function(){
+      tone(i % 2 ? 760 : 520,0.18);
+      i++;
+      if(!callActive || i > 34){clearInterval(id);}
+    },280);
+  }
+
+  function resetState(){
+    qIndex = 0;
+    correctCount = 0;
+    timeLeft = 180;
+    locked = false;
+    pressure = 37;
+    callActive = false;
+    clearInterval(timerId);
+    clearInterval(popupId);
+    timerId = null;
+    popupId = null;
+    el("score").textContent = "0%";
+    el("pressure").textContent = "37%";
+    el("qNum").textContent = "1/8";
+    el("hyp").textContent = "OAuth?";
+    el("toastZone").innerHTML = "";
+    el("callOverlay").className = "call";
+    el("endScreen").className = "end";
+    el("certBox").className = "certBox";
+    updateClock();
+  }
+
+  function startGame(){
+    var name = el("playerName").value.trim();
+    var popup = el("namePopup");
+
+    if(!name){
+      popup.style.display = "block";
+      popup.textContent = "O SOC não funciona por telepatia. Digite seu nome antes de entrar no caos corporativo.";
+      return;
+    }
+
+    player = name;
+    initAudio();
+    resetState();
+    started = true;
+    el("startScreen").style.display = "none";
+    renderQuestion();
+    renderSIEM("");
+    timerId = setInterval(tick,1000);
+    popupId = setInterval(function(){
+      spawnToast();
+      if(Math.random() > 0.62){showCall();}
+    },7000);
+  }
+
+  function tick(){
+    if(locked){return;}
+    timeLeft--;
+    updateClock();
+    if(timeLeft <= 20){tone(190,0.05);}
+    if(timeLeft <= 0){
+      fail("Tempo esgotado. O incidente não aguardou maturidade emocional.");
+    }
+  }
+
+  function updateClock(){
+    var m = String(Math.floor(timeLeft / 60)).padStart(2,"0");
+    var s = String(timeLeft % 60).padStart(2,"0");
+    el("timeText").textContent = m + ":" + s;
+    el("timeBar").style.width = (timeLeft / 180 * 100) + "%";
+    if(timeLeft <= 20){el("timeText").className = "time danger";}
+    else{el("timeText").className = "time";}
+  }
+
+  function renderQuestion(){
+    var q = questions[qIndex];
+    locked = false;
+    timeLeft = 180;
+    updateClock();
+    el("qNum").textContent = (qIndex + 1) + "/8";
+    el("phaseTag").textContent = q.tag;
+
+    var evHtml = "";
+    for(var i=0;i<q.ev.length;i++){
+      evHtml += "<div>" + q.ev[i] + "</div>";
+    }
+
+    el("scenario").innerHTML = "<h2>" + q.title + "</h2><p>" + q.desc + "</p><div class='evidence'>" + evHtml + "</div>";
+
+    var ansHtml = "";
+    for(var j=0;j<q.answers.length;j++){
+      ansHtml += "<button class='answer' data-i='" + j + "'><span class='letter'>" + String.fromCharCode(65+j) + "</span><span>" + q.answers[j] + "</span></button>";
+    }
+    el("answers").innerHTML = ansHtml;
+
+    all(".answer").forEach(function(btn){
+      btn.onclick = function(){
+        choose(Number(btn.getAttribute("data-i")));
+      };
+    });
+
+    if(qIndex >= 3){el("hyp").textContent = "OAuth!";}
+    if(qIndex === 1 || qIndex === 5 || qIndex === 7){
+      setTimeout(showCall,1400);
+    }
+  }
+
+  function choose(idx){
+    if(locked){return;}
+    locked = true;
+
+    var q = questions[qIndex];
+    var correct = decIndex(q.correct);
+
+    all(".answer").forEach(function(btn,n){
+      btn.classList.add("locked");
+      if(n === correct){btn.classList.add("good");}
+      if(n === idx && n !== correct){btn.classList.add("bad");}
+    });
+
+    if(idx !== correct){
+      setTimeout(function(){
+        fail("Decisão plausível, mas errada no contexto. Você perseguiu ruído e deixou a causa raiz ativa.");
+      },700);
+      return;
+    }
+
+    correctCount++;
+    pressure = Math.min(99, pressure + 7);
+    el("score").textContent = Math.round(correctCount / questions.length * 100) + "%";
+    el("pressure").textContent = pressure + "%";
+    tone(820,0.12);
+
+    setTimeout(function(){
+      qIndex++;
+      if(qIndex >= questions.length){success();}
+      else{renderQuestion();}
+    },800);
+  }
+
+  function renderSIEM(v){
+    v = (v || "").toLowerCase();
+    var out = [];
+    for(var i=0;i<logs.length;i++){
+      if(!v || logs[i].toLowerCase().indexOf(v) >= 0){out.push(logs[i]);}
+    }
+    el("siemOut").textContent = out.length ? out.join("\n") : "Nada encontrado. Em incidente, ausência também grita.";
+  }
+
+  function runCmd(cmd){
+    cmd = cmd || el("cmdInput").value.trim();
+    if(!cmd){return;}
+
+    var term = el("terminal");
+    term.textContent += "\n$ " + cmd + "\n";
+    var c = cmd.toLowerCase();
+    var out = "Comandos: help | cat oauth_audit.json | grep dns ot.log | grep powershell edr.log | cat timeline.txt";
+
+    if(c.indexOf("oauth") >= 0){
+      out = "02:16 consent_grant app=AquaHell AI Social Booster scopes=Mail.Read Calendars.Read offline_access\n02:19 inbox_rule external_forward\n02:27 audit_retention modified by servicePrincipal";
+    }else if(c.indexOf("dns") >= 0){
+      out = "wavepool-ctrl -> telemetry.aqua-ot.vendor q60s // firmware 4.8+ // sem volume anômalo";
+    }else if(c.indexOf("powershell") >= 0){
+      out = "updater_legacy.exe spawned powershell -enc // assinatura interna válida // feio, mas esperado";
+    }else if(c.indexOf("timeline") >= 0){
+      out = "D-15 OAuth consent\nD-14 mailbox reads\nD-13 forwarding rule\nD-01 firmware OT\n02:11 logging gap\n02:36 caos percebido";
+    }
+
+    term.textContent += out + "\n";
+    el("cmdInput").value = "";
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function spawnToast(){
+    if(!started){return;}
+    var p = popups[Math.floor(Math.random() * popups.length)];
+    var div = document.createElement("div");
+    div.className = "toast";
+    div.innerHTML = "<button>x</button><b>" + p[0] + "</b><span>" + p[1] + "</span>";
+    div.querySelector("button").onclick = function(){div.remove();};
+    el("toastZone").appendChild(div);
+    tone(620,0.08);
+    setTimeout(function(){
+      if(div.parentNode){div.parentNode.removeChild(div);}
+    },9000);
+  }
+
+  function showCall(){
+    if(callActive || !started){return;}
+    var c = calls[Math.floor(Math.random() * calls.length)];
+    callActive = true;
+    el("callRole").textContent = c[0];
+    el("callName").textContent = c[1];
+    el("callText").textContent = c[2];
+    el("callOverlay").className = "call show";
+    ring();
+  }
+
+  function closeCall(){
+    callActive = false;
+    el("callOverlay").className = "call";
+  }
+
+  function stopGame(){
+    clearInterval(timerId);
+    clearInterval(popupId);
+    timerId = null;
+    popupId = null;
+    started = false;
+    closeCall();
+  }
+
+  function fail(msg){
+    stopGame();
+    el("endScreen").className = "end show";
+    el("endEyebrow").textContent = "CERTIFICAÇÃO NEGADA";
+    el("endTitle").textContent = "O escorregador venceu.";
+    el("endText").textContent = msg + " Sem certificado. Recomece e separe ruído de causa raiz.";
+    el("certBox").className = "certBox";
+  }
+
+  function success(){
+    stopGame();
+    el("endScreen").className = "end show";
+    el("endEyebrow").textContent = "CERTIFICAÇÃO LIBERADA";
+    el("endTitle").textContent = "Você apagou o AquaHELL.";
+    el("endText").textContent = "Você acertou tudo, identificou abuso OAuth, ignorou ruídos bonitos, não quebrou OT no susto e ainda sobreviveu à diretoria ligando.";
+    el("certBox").className = "certBox show";
+    drawCert();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function wrap(ctx,text,x,y,max,line){
+    var words = text.split(" ");
+    var current = "";
+    for(var i=0;i<words.length;i++){
+      var test = current + words[i] + " ";
+      if(ctx.measureText(test).width > max){
+        ctx.fillText(current,x,y);
+        current = words[i] + " ";
+        y += line;
+      }else{
+        current = test;
+      }
+    }
+    ctx.fillText(current,x,y);
+  }
+
+  function drawCert(){
+    var c = el("certCanvas");
+    var ctx = c.getContext("2d");
+    var w = c.width;
+    var h = c.height;
+    var grad = ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,"#070707");
+    grad.addColorStop(0.55,"#170707");
+    grad.addColorStop(1,"#290808");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+    ctx.strokeStyle = "#ffd36b";
+    ctx.lineWidth = 8;
+    roundRect(ctx,55,55,w-110,h-110,36);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,45,45,.55)";
+    ctx.lineWidth = 2;
+    roundRect(ctx,88,88,w-176,h-176,26);
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 145px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("AQUAHELL",w/2,545);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "#ff6a6a";
+    ctx.font = "900 32px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("INCIDENT RESPONSE EXPERIENCE",w/2,170);
+
+    ctx.fillStyle = "#ffd36b";
+    ctx.font = "900 66px Georgia";
+    ctx.fillText("Certificado de Resposta a Incidente",w/2,265);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 36px Arial";
+    ctx.fillText(player,w/2,345);
+
+    ctx.fillStyle = "#dddddd";
+    ctx.font = "22px Arial";
+    ctx.textAlign = "center";
+
+    function wrapCenter(ctx,text,centerX,y,maxWidth,lineHeight){
+      var words = text.split(" ");
+      var lines = [];
+      var current = "";
+
+      for(var i=0;i<words.length;i++){
+        var test = current + words[i] + " ";
+        if(ctx.measureText(test).width > maxWidth){
+          lines.push(current.trim());
+          current = words[i] + " ";
+        }else{
+          current = test;
+        }
+      }
+
+      lines.push(current.trim());
+
+      for(var j=0;j<lines.length;j++){
+        ctx.fillText(lines[j],centerX,y + (j * lineHeight));
+      }
+    }
+
+    wrapCenter(
+      ctx,
+      "Concedido pela conclusão com 100% de acerto no cenário AquaHELL Resort, demonstrando análise contextual de alertas, correlação SIEM, identificação de abuso OAuth, contenção proporcional, avaliação de impacto OT e comunicação executiva factual.",
+      w / 2,
+      430,
+      1080,
+      34
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,.06)";
+    roundRect(ctx,165,720,1270,150,24);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 28px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Resumo do que foi aprendido",w / 2,758);
+
+    ctx.fillStyle = "#dddddd";
+    ctx.font = "22px Arial";
+    wrapCenter(
+      ctx,
+      "A melhor resposta não foi perseguir o alerta mais barulhento, mas reconstruir a linha do tempo e provar que o vetor inicial foi consent phishing OAuth ocorrido 15 dias antes do caos visível.",
+      w / 2,
+      802,
+      980,
+      30
+    );
+
+    ctx.strokeStyle = "rgba(255,211,107,.7)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(190,945);
+    ctx.lineTo(620,945);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffd36b";
+    ctx.font = "48px Georgia";
+    ctx.fillText("Mariana BS",210,930);
+
+    ctx.fillStyle = "#dddddd";
+    ctx.font = "20px Arial";
+    ctx.fillText("Incident Commander - AquaHELL Resort",205,980);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#ff8e8e";
+    ctx.font = "900 22px Consolas";
+    var hash = "AH-" + Math.random().toString(16).slice(2,10).toUpperCase();
+    ctx.fillText("HASH: " + hash,1395,940);
+
+    ctx.fillStyle = "#bbbbbb";
+    ctx.font = "19px Arial";
+    ctx.fillText(new Date().toLocaleDateString("pt-BR") + " - Carga horária: 1h",1395,980);
+  }
+
+  el("startBtn").onclick = startGame;
+  el("siemSearch").oninput = function(e){renderSIEM(e.target.value);};
+  el("cmdRun").onclick = function(){runCmd();};
+  el("cmdInput").onkeydown = function(e){if(e.key === "Enter"){runCmd();}};
+  all("[data-cmd]").forEach(function(btn){
+    btn.onclick = function(){runCmd(btn.getAttribute("data-cmd"));};
+  });
+  el("closeCall").onclick = closeCall;
+  el("restartBtn").onclick = function(){
+    stopGame();
+    resetState();
+    el("endScreen").className = "end";
+    el("startScreen").style.display = "flex";
+    el("namePopup").style.display = "none";
+  };
+  el("downloadCert").onclick = function(){
+    var a = document.createElement("a");
+    a.download = "certificado-aquahell-" + player.replace(/\s+/g,"-").toLowerCase() + ".png";
+    a.href = el("certCanvas").toDataURL("image/png");
+    a.click();
+  };
+
+  renderSIEM("");
+})();
+</script>
+</body>
+</html>
