@@ -926,10 +926,12 @@ Digite help</div>
     var ctx = c.getContext("2d");
     var w = c.width;
     var h = c.height;
+
     var grad = ctx.createLinearGradient(0,0,w,h);
     grad.addColorStop(0,"#070707");
     grad.addColorStop(0.55,"#170707");
     grad.addColorStop(1,"#290808");
+
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,w,h);
 
@@ -963,10 +965,6 @@ Digite help</div>
     ctx.font = "700 36px Arial";
     ctx.fillText(player,w/2,345);
 
-    ctx.fillStyle = "#dddddd";
-    ctx.font = "22px Arial";
-    ctx.textAlign = "center";
-
     function wrapCenter(ctx,text,centerX,y,maxWidth,lineHeight){
       var words = text.split(" ");
       var lines = [];
@@ -975,19 +973,45 @@ Digite help</div>
       for(var i=0;i<words.length;i++){
         var test = current + words[i] + " ";
         if(ctx.measureText(test).width > maxWidth){
-          lines.push(current.trim());
+          if(current.trim()){lines.push(current.trim());}
           current = words[i] + " ";
         }else{
           current = test;
         }
       }
 
-      lines.push(current.trim());
+      if(current.trim()){lines.push(current.trim());}
 
       for(var j=0;j<lines.length;j++){
         ctx.fillText(lines[j],centerX,y + (j * lineHeight));
       }
     }
+
+    function wrapLeft(ctx,text,x,y,maxWidth,lineHeight){
+      var words = text.split(" ");
+      var lines = [];
+      var current = "";
+
+      for(var i=0;i<words.length;i++){
+        var test = current + words[i] + " ";
+        if(ctx.measureText(test).width > maxWidth){
+          if(current.trim()){lines.push(current.trim());}
+          current = words[i] + " ";
+        }else{
+          current = test;
+        }
+      }
+
+      if(current.trim()){lines.push(current.trim());}
+
+      for(var j=0;j<lines.length;j++){
+        ctx.fillText(lines[j],x,y + (j * lineHeight));
+      }
+    }
+
+    ctx.fillStyle = "#dddddd";
+    ctx.font = "22px Arial";
+    ctx.textAlign = "center";
 
     wrapCenter(
       ctx,
@@ -1009,6 +1033,7 @@ Digite help</div>
 
     ctx.fillStyle = "#dddddd";
     ctx.font = "22px Arial";
+
     wrapCenter(
       ctx,
       "A melhor resposta não foi perseguir o alerta mais barulhento, mas reconstruir a linha do tempo e provar que o vetor inicial foi consent phishing OAuth ocorrido 15 dias antes do caos visível.",
@@ -1021,27 +1046,38 @@ Digite help</div>
     ctx.strokeStyle = "rgba(255,211,107,.7)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(190,945);
-    ctx.lineTo(620,945);
+    ctx.moveTo(190,940);
+    ctx.lineTo(620,940);
     ctx.stroke();
 
+    ctx.textAlign = "left";
     ctx.fillStyle = "#ffd36b";
-    ctx.font = "48px Georgia";
-    ctx.fillText("Mariana BS",210,930);
+    ctx.font = "42px Georgia";
+    ctx.fillText("Mariana BS",190,925);
 
     ctx.fillStyle = "#dddddd";
-    ctx.font = "20px Arial";
-    ctx.fillText("Incident Commander - AquaHELL Resort",205,980);
+    ctx.font = "18px Arial";
+
+    wrapLeft(
+      ctx,
+      "Incident Commander - AquaHELL Resort",
+      190,
+      970,
+      380,
+      24
+    );
 
     ctx.textAlign = "right";
     ctx.fillStyle = "#ff8e8e";
     ctx.font = "900 22px Consolas";
+
     var hash = "AH-" + Math.random().toString(16).slice(2,10).toUpperCase();
-    ctx.fillText("HASH: " + hash,1395,940);
+
+    ctx.fillText("HASH: " + hash,1395,930);
 
     ctx.fillStyle = "#bbbbbb";
     ctx.font = "19px Arial";
-    ctx.fillText(new Date().toLocaleDateString("pt-BR") + " - Carga horária: 1h",1395,980);
+    ctx.fillText(new Date().toLocaleDateString("pt-BR") + " - Carga horária: 1h",1395,970);
   }
 
   el("startBtn").onclick = startGame;
